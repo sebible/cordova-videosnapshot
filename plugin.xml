@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+xmlns:android="http://schemas.android.com/apk/res/android"
+           id="com.sebible.cordova.videosnapshot"
+      version="0.2.7">
+    <name>Video Snapshot</name>
+
+    <description>Cordova Video Snapshot Plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,video,snapshot</keywords>
+    <repo></repo>
+    <issue></issue>
+
+   
+    <js-module src="www/VideoSnapshot.js" name="VideoSnapshot">
+        <clobbers target="sebible.videosnapshot" />
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+ 
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="VideoSnapshot">
+                <param name="android-package" value="com.sebible.cordova.videosnapshot.VideoSnapshot"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.INTERNET" /> 
+        </config-file>
+
+        <source-file src="src/android/VideoSnapshot.java" target-dir="src/com/sebible/cordova/videosnapshot" />
+    </platform>
+    
+        
+</plugin>
