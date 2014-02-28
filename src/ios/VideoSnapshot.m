@@ -24,7 +24,6 @@ limitations under the License.
 
 - (void)snapshot:(CDVInvokedUrlCommand*)command
 {
-	CDVPluginResult* pluginResult = nil;
     NSDictionary* options = [command.arguments objectAtIndex:0];
 
     if (options == nil) {
@@ -32,7 +31,8 @@ limitations under the License.
 	    return;
     }
 
-    NSNumber* count = [options objectForKey:@"count"];
+    NSNumber* nscount = [options objectForKey:@"count"];
+	int count = 1;
     NSString* source = [options objectForKey:@"source"];
 
     if (source == nil) {
@@ -40,13 +40,17 @@ limitations under the License.
     	return;
     }
 
+	if (nscount != nil) {
+		count = [nscount intValue];
+	}
+
     NSURL* url = [NSURL URLWithString:source relativeToURL:nil];
     if (url == nil) {
     	[self fail:command withMessage:@"Unable to open url"];
     	return;
     }
 
-    NSString* filename = [url.lastPathComponent() stringByReplacingOccurrencesOfString:@"." withString:@"_"];
+    NSString* filename = [url.lastPathComponent stringByReplacingOccurrencesOfString:@"." withString:@"_"];
     NSString* tmppath = NSTemporaryDirectory();
     AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:url options:nil];
     AVAssetImageGenerator *generate = [[AVAssetImageGenerator alloc] initWithAsset:asset];
@@ -62,41 +66,43 @@ limitations under the License.
 
     NSMutableArray* times = [[NSMutableArray alloc] init];
     for (int i = 1; delta * i < duration && i <= count; i++) {
-	    [times addObject:CMTimeMakeSeconds(delta * i, asset.duration.timescale)];
+	    [times addObject:[NSValue valueWithCMTime:CMTimeMakeWithSeconds(delta * i, asset.duration.timescale)]];
 	}
 
-    CGImageRef imgRef = [generate generateCGImagesAsynchronouslyForTimes:times completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+    [generate generateCGImagesAsynchronouslyForTimes:times completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
 	    NSLog(@"err==%@, imageRef==%@", err, image);
 	    if (err != nil) {
 	    	return;
 	    }    
 
 	   	int sec = (int)CMTimeGetSeconds(actualTime);
-	    NSString* path = [tmppath stringByAppendingPathComponent: [NSString stringWithFormat:@"%s-snapshot%d.jpg", filename, sec]]
+	    NSString* path = [tmppath stringByAppendingPathComponent: [NSString stringWithFormat:@"%@-snapshot%d.jpg", filename, sec]];
 	    UIImage *uiImage = [UIImage imageWithCGImage:image];
 		NSData *jpgData = UIImageJPEGRepresentation(uiImage, 0.9f);
 		[jpgData writeToFile:path atomically:NO];
 
 		[paths addObject:path];
-		CFRelease(imgRef);
+		CFRelease(image);
     }];
 	
 	NSDictionary* ret = [NSDictionary dictionaryWithObjectsAndKeys:
-		true, @"result", paths, @"paths", nil];
+		[NSNumber numberWithBool:true], @"result", paths, @"paths", nil];
 
 	[self success:command withDictionary:ret];
 }
 
-- (void)sucess:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret
+- (void)success:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret
 {
-	pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:ret];
+	CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:ret];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];	
 }
 
 - (void)fail:(CDVInvokedUrlCommand*)command withMessage:(NSString*)message 
 {
 	NSDictionary* ret = [NSDictionary dictionaryWithObjectsAndKeys:
-		false, @"result", message, @"error", nil];
-	pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:ret];
+		[NSNumber numberWithBool:false], @"result", message, @"error", nil];
+	CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:ret];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];	
 }
+
+@end
