@@ -22,4 +22,5 @@ limitations under the License.
 - (void)snapshot:(CDVInvokedUrlCommand*)command;
 - (void)fail:(CDVInvokedUrlCommand*)command withMessage:(NSString*)message;
 - (void)sucess:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret;
+
 @end

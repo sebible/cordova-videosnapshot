@@ -60,29 +60,31 @@ limitations under the License.
     Float64 duration = CMTimeGetSeconds(asset.duration);
     Float64 delta = duration / (count + 1);
 
+    NSMutableArray* times = [[NSMutableArray alloc] init];
     for (int i = 1; delta * i < duration && i <= count; i++) {
-	    CMTime time = CMTimeMakeSeconds(delta * i, asset.duration.timescale);
-	    CGImageRef imgRef = [generate copyCGImageAtTime:time actualTime:NULL error:&err];
-	    NSLog(@"err==%@, imageRef==%@", err, imgRef);
+	    [times addObject:CMTimeMakeSeconds(delta * i, asset.duration.timescale)];
+	}
+
+    CGImageRef imgRef = [generate generateCGImagesAsynchronouslyForTimes:times completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+	    NSLog(@"err==%@, imageRef==%@", err, image);
 	    if (err != nil) {
-	    	[self fail:command withMessage:@"Unable to get snapshot"];
 	    	return;
 	    }    
 
-	    NSString* path = [tmppath stringByAppendingPathComponent: [NSString stringWithFormat:@"%s-snapshot%d.jpg", filename, i]]
-	    UIImage *uiImage = [UIImage imageWithCGImage:imgRef];
+	   	int sec = (int)CMTimeGetSeconds(actualTime);
+	    NSString* path = [tmppath stringByAppendingPathComponent: [NSString stringWithFormat:@"%s-snapshot%d.jpg", filename, sec]]
+	    UIImage *uiImage = [UIImage imageWithCGImage:image];
 		NSData *jpgData = UIImageJPEGRepresentation(uiImage, 0.9f);
 		[jpgData writeToFile:path atomically:NO];
 
 		[paths addObject:path];
-	}
-
+		CFRelease(imgRef);
+    }];
 	
 	NSDictionary* ret = [NSDictionary dictionaryWithObjectsAndKeys:
 		true, @"result", paths, @"paths", nil];
 
 	[self success:command withDictionary:ret];
-	CFRelease(imgRef);
 }
 
 - (void)sucess:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret
