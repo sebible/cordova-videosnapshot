@@ -34,6 +34,19 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 
         <source-file src="src/android/VideoSnapshot.java" target-dir="src/com/sebible/cordova/videosnapshot" />
     </platform>
-    
+ 
+    <platform name="ios">
+         <config-file target="config.xml" parent="/*">
+             <feature name="VideoSnapshot">
+                 <param name="ios-package" value="VideoSnapshot" />
+             </feature>
+         </config-file>
+
+         <header-file src="src/ios/VideoSnapshot.h" />
+         <source-file src="src/ios/VideoSnapshot.m" />
+         <framework src="Foundation.framework" />
+         <framework src="UIKit.framework" />
+         <framework src="AVFoundation.framework" />
+    </platform>   
         
 </plugin>
