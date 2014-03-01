@@ -9,7 +9,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
     <description>Cordova Video Snapshot Plugin</description>
     <license>Apache 2.0</license>
     <keywords>cordova,video,snapshot</keywords>
-    <repo></repo>
+    <repo>https://github.com/sebible/cordova-videosnapshot.git</repo>
     <issue></issue>
 
    
