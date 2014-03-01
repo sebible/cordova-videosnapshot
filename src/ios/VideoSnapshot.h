@@ -16,11 +16,17 @@ limitations under the License.
 
 */
 #import <Cordova/CDVPlugin.h>
+#import <Foundation/Foundation.h>
+#import <AVFoundation/AVFoundation.h>
+#import <UIKit/UIKit.h>
+
 
 @interface VideoSnapshot : CDVPlugin
 
+- (NSString *)applicationDocumentsDirectory;
 - (void)snapshot:(CDVInvokedUrlCommand*)command;
 - (void)fail:(CDVInvokedUrlCommand*)command withMessage:(NSString*)message;
 - (void)success:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret;
+- (UIImage *)drawTimestamp:(CMTime)timestamp withPrefix:(NSString*)prefix ofSize:(int)textSize toImage:(UIImage *)img;
 
 @end
