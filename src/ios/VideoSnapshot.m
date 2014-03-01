@@ -64,12 +64,14 @@ limitations under the License.
     }
 
 	int count = 1;
+	int countPerMinute = 0;
 	int textSize = 48;
 	bool timestamp = true;
 	float quality = 0.9f;
 	NSString* prefix = @"";
 
     NSNumber* nscount = [options objectForKey:@"count"];
+    NSNumber* nscountPerMinute = [options objectForKey:@"countPerMinute"];
     NSNumber* nstextSize = [options objectForKey:@"textSize"];
     NSString* source = [options objectForKey:@"source"];
 	NSNumber* nstimestamp = [options objectForKey:@"timestamp"];
@@ -80,10 +82,14 @@ limitations under the License.
     	[self fail:command withMessage:@"No source provided"];
     	return;
     }
-	// source = [self.applicationDocumentsDirectory stringByAppendingPathComponent:@"test.mov"];
+	//source = [self.applicationDocumentsDirectory stringByAppendingPathComponent:@"test.mov"];
 
 	if (nscount != nil) {
 		count = [nscount intValue];
+	}
+
+	if (nscountPerMinute != nil) {
+		countPerMinute = [nscountPerMinute intValue];
 	}
 
 	if (nstimestamp != nil) {
@@ -120,7 +126,16 @@ limitations under the License.
     }
 
     Float64 duration = CMTimeGetSeconds(asset.duration);
+	if (countPerMinute > 0) {
+		count = countPerMinute * duration / 60;
+	}
+	if (count < 1) {
+		count = 1;
+	}
     Float64 delta = duration / (count + 1);
+	if (delta < 1.f) {
+		delta = 1.f;
+	}
 
     NSMutableArray* times = [[NSMutableArray alloc] init];
     for (int i = 1; delta * i < duration && i <= count; i++) {
