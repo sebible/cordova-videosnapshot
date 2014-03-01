@@ -41,4 +41,4 @@ and the duration of the video.
 License 
 -------
 
-MIT
+Apache 2.0
