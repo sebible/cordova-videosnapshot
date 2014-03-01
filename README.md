@@ -30,8 +30,7 @@ and the duration of the video.
 * **options**		options object. Possible keys:
     *							source: string, a file url of the source file
     *							count: int, count of snapshots that will be taken, default 1
-    *							countPerMinute: int, if specified, count will be calculated according to the duration, 
-    *											default 0 (disabled)
+    *							countPerMinute: int, if specified, count will be calculated according to the duration, default 0 (disabled)
     *							timeStamp: bool, add a timestamp at the lower-right corner, default true
     *							textSize: int, timestamp size, default 48
     *							prefix: string, optional text to print before timestamp
