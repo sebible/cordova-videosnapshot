@@ -16,37 +16,99 @@ limitations under the License.
 
 */
 #import "VideoSnapshot.h"
-#import <Foundation/Foundation.h>
-#import <AVFoundation/AVFoundation.h>
-#import <UIKit/UIKit.h>
 
 @implementation VideoSnapshot
 
+- (NSString *)applicationDocumentsDirectory {
+    return [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+}
+
+-(UIImage *)drawTimestamp:(CMTime)timestamp withPrefix:(NSString*)prefix ofSize:(int)textSize toImage:(UIImage *)img{
+	CGFloat w = img.size.width, h = img.size.height;
+	CGFloat size = (CGFloat)(textSize * w) / 1280;
+	CGFloat margin = (w < h? w : h) * 0.05;
+	NSString* fontName = @"Helvetica";
+
+	long timeMs = (long)(1000 * CMTimeGetSeconds(timestamp));
+	int second = (timeMs / 1000) % 60;
+	int minute = (timeMs / (1000 * 60)) % 60;
+	int hour = (timeMs / (1000 * 60 * 60)) % 24;
+	NSString* text = [NSString stringWithFormat:@"%@ %02d:%02d:%02d", prefix, hour, minute, second];
+    //CGSize sizeText = [text sizeWithFont:[UIFont fontWithName:@"Helvetica" size:size] minFontSize:size actualFontSize:nil forWidth:783 lineBreakMode:NSLineBreakModeTailTruncation];
+	UIFont* font = [UIFont fontWithName:fontName size:size];
+	UIColor* color = [UIColor whiteColor];
+	NSDictionary* attrs = [NSDictionary dictionaryWithObjectsAndKeys: font, NSFontAttributeName, color, NSForegroundColorAttributeName, nil];
+	CGSize sizeText = [text sizeWithAttributes:attrs];
+
+    CGFloat posX = w - margin - sizeText.width;
+    CGFloat posY = h - margin - sizeText.height;
+	NSLog(@"Drawing at (%f, %f) of size: %f. Image size: (%f, %f)", posX, posY, size, w, h);
+
+    UIGraphicsBeginImageContextWithOptions(img.size, NO, 0.0f);
+    [img drawAtPoint:CGPointMake(0.0f, 0.0f)];
+    [text drawAtPoint:CGPointMake(posX, posY) withAttributes:attrs];
+    UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    return result;
+} 
+
 - (void)snapshot:(CDVInvokedUrlCommand*)command
 {
-	CDVPluginResult* pluginResult = nil;
     NSDictionary* options = [command.arguments objectAtIndex:0];
+	NSLog(@"In plugin. Options:%@", options);
 
     if (options == nil) {
 	    [self fail:command withMessage:@"No options provided"];
 	    return;
     }
 
-    NSNumber* count = [options objectForKey:@"count"];
+	int count = 1;
+	int textSize = 48;
+	bool timestamp = true;
+	float quality = 0.9f;
+	NSString* prefix = @"";
+
+    NSNumber* nscount = [options objectForKey:@"count"];
+    NSNumber* nstextSize = [options objectForKey:@"textSize"];
     NSString* source = [options objectForKey:@"source"];
+	NSNumber* nstimestamp = [options objectForKey:@"timestamp"];
+	NSNumber* nsquality = [options objectForKey:@"quality"];
+	NSString* nsprefix = [options objectForKey:@"prefix"];
 
     if (source == nil) {
     	[self fail:command withMessage:@"No source provided"];
     	return;
     }
+	// source = [self.applicationDocumentsDirectory stringByAppendingPathComponent:@"test.mov"];
 
-    NSURL* url = [NSURL URLWithString:source relativeToURL:nil];
+	if (nscount != nil) {
+		count = [nscount intValue];
+	}
+
+	if (nstimestamp != nil) {
+		timestamp = [nstimestamp boolValue];
+	}
+
+	if (nsquality != nil) {
+		quality = (float)[nsquality intValue] / 100;
+	}
+
+	if (nsprefix != nil) {
+		prefix = nsprefix;
+	}
+
+	if (nstextSize != nil) {
+		textSize = [nstextSize intValue];
+	}
+
+    NSURL* url = [NSURL fileURLWithPath:source];
     if (url == nil) {
-    	[self fail:command withMessage:@"Unable to open url"];
+    	[self fail:command withMessage:@"Unable to open path"];
     	return;
     }
 
-    NSString* filename = [url.lastPathComponent() stringByReplacingOccurrencesOfString:@"." withString:@"_"];
+    NSString* filename = [url.lastPathComponent stringByReplacingOccurrencesOfString:@"." withString:@"_"];
     NSString* tmppath = NSTemporaryDirectory();
     AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:url options:nil];
     AVAssetImageGenerator *generate = [[AVAssetImageGenerator alloc] initWithAsset:asset];
@@ -62,41 +124,52 @@ limitations under the License.
 
     NSMutableArray* times = [[NSMutableArray alloc] init];
     for (int i = 1; delta * i < duration && i <= count; i++) {
-	    [times addObject:CMTimeMakeSeconds(delta * i, asset.duration.timescale)];
+	    [times addObject:[NSValue valueWithCMTime:CMTimeMakeWithSeconds(delta * i, asset.duration.timescale)]];
 	}
 
-    CGImageRef imgRef = [generate generateCGImagesAsynchronouslyForTimes:times completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
+    [generate generateCGImagesAsynchronouslyForTimes:times completionHandler:^(CMTime requestedTime, CGImageRef image, CMTime actualTime, AVAssetImageGeneratorResult result, NSError *error) {
 	    NSLog(@"err==%@, imageRef==%@", err, image);
 	    if (err != nil) {
 	    	return;
 	    }    
 
 	   	int sec = (int)CMTimeGetSeconds(actualTime);
-	    NSString* path = [tmppath stringByAppendingPathComponent: [NSString stringWithFormat:@"%s-snapshot%d.jpg", filename, sec]]
+	    NSString* path = [tmppath stringByAppendingPathComponent: [NSString stringWithFormat:@"%@-snapshot%d.jpg", filename, sec]];
 	    UIImage *uiImage = [UIImage imageWithCGImage:image];
-		NSData *jpgData = UIImageJPEGRepresentation(uiImage, 0.9f);
+		if (timestamp) {
+			uiImage = [self drawTimestamp:actualTime withPrefix:prefix ofSize:textSize toImage:uiImage];
+		}
+
+		NSData *jpgData = UIImageJPEGRepresentation(uiImage, quality);
 		[jpgData writeToFile:path atomically:NO];
 
-		[paths addObject:path];
-		CFRelease(imgRef);
-    }];
-	
-	NSDictionary* ret = [NSDictionary dictionaryWithObjectsAndKeys:
-		true, @"result", paths, @"paths", nil];
+		@synchronized (paths){
+			[paths addObject:path];
+			if (paths.count == times.count) {
+				NSDictionary* ret = [NSDictionary dictionaryWithObjectsAndKeys:
+					[NSNumber numberWithBool:true], @"result", paths, @"snapshots", nil];
 
-	[self success:command withDictionary:ret];
+				[self success:command withDictionary:ret];
+			}
+		}
+		//CFRelease(image);
+    }];
 }
 
-- (void)sucess:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret
+- (void)success:(CDVInvokedUrlCommand*)command withDictionary:(NSDictionary*)ret
 {
-	pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:ret];
+	NSLog(@"Plugin success. Result: %@", ret);
+	CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:ret];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];	
 }
 
 - (void)fail:(CDVInvokedUrlCommand*)command withMessage:(NSString*)message 
 {
+	NSLog(@"Plugin failed. Error: %@", message);
 	NSDictionary* ret = [NSDictionary dictionaryWithObjectsAndKeys:
-		false, @"result", message, @"error", nil];
-	pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:ret];
+		[NSNumber numberWithBool:false], @"result", message, @"error", nil];
+	CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:ret];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];	
 }
+
+@end
