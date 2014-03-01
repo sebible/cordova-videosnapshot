@@ -73,8 +73,9 @@ public class VideoSnapshot extends CordovaPlugin {
 
 
     private void drawTimestamp(Bitmap bm, String prefix, long timeMs, int textSize) {
-        float size = (float)(textSize * 1280) / bm.getWidth();
-        float margin = size * 2;
+        float w = bm.getWidth(), h = bm.getHeight();
+        float size = (float)(textSize * bm.getWidth()) / 1280;
+        float margin = (float)(w < h ? w : h) * 0.05f;
 
         Canvas c = new Canvas(bm);
         Paint p = new Paint();
@@ -107,11 +108,12 @@ public class VideoSnapshot extends CordovaPlugin {
                 MediaMetadataRetriever retriever = new MediaMetadataRetriever();
                 try {
                     int count = options.optInt("count", 1);
+                    int countPerMinute = options.optInt("countPerMinute", 0);
                     int quality = options.optInt("quality", 90);
                     String source = options.optString("source", "");
                     Boolean timestamp = options.optBoolean("timestamp", true);
                     String prefix = options.optString("prefix", "");
-                    int textSize = options.optInt("textSize", 32);
+                    int textSize = options.optInt("textSize", 48);
                     
                     if (source.isEmpty()) {
                         throw new Exception("No source provided");
@@ -129,10 +131,17 @@ public class VideoSnapshot extends CordovaPlugin {
                     retriever.setDataSource(in.getFD());
                     String tmp = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                     long duration = Long.parseLong(tmp);
+                    if (countPerMinute > 0) {
+                        count = (int)(countPerMinute * duration / (60 * 1000));
+                    }
+                    if (count < 1) {
+                        count = 1;
+                    }
                     long delta = duration / (count + 1); // Start at duration * 1 and ends at duration * count
                     if (delta < 1000) { // min 1s
                         delta = 1000;
                     }
+
                     Log.i("snapshot", "duration:" + duration + " delta:" + delta);
 
                     File storage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
