@@ -74,7 +74,7 @@ limitations under the License.
     NSNumber* nscountPerMinute = [options objectForKey:@"countPerMinute"];
     NSNumber* nstextSize = [options objectForKey:@"textSize"];
     NSString* source = [options objectForKey:@"source"];
-	NSNumber* nstimestamp = [options objectForKey:@"timestamp"];
+	NSNumber* nstimestamp = [options objectForKey:@"timeStamp"];
 	NSNumber* nsquality = [options objectForKey:@"quality"];
 	NSString* nsprefix = [options objectForKey:@"prefix"];
 
