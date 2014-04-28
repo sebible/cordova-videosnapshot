@@ -111,7 +111,7 @@ public class VideoSnapshot extends CordovaPlugin {
                     int countPerMinute = options.optInt("countPerMinute", 0);
                     int quality = options.optInt("quality", 90);
                     String source = options.optString("source", "");
-                    Boolean timestamp = options.optBoolean("timestamp", true);
+                    Boolean timestamp = options.optBoolean("timeStamp", true);
                     String prefix = options.optString("prefix", "");
                     int textSize = options.optInt("textSize", 48);
                     
