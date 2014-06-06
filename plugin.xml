@@ -3,7 +3,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 xmlns:android="http://schemas.android.com/apk/res/android"
            id="com.sebible.cordova.videosnapshot"
-      version="0.2.7">
+      version="0.2.8">
     <name>Video Snapshot</name>
 
     <description>Cordova Video Snapshot Plugin</description>
