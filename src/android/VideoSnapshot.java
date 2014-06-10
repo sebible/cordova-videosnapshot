@@ -146,8 +146,8 @@ public class VideoSnapshot extends CordovaPlugin {
 
                     File storage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
                     for (int i = 1; delta * i < duration && i <= count; i++) {
-                        filename = filename.replace('.', '_') + "-snapshot" + i + ".jpg";
-                        File dest = new File(storage, filename);
+                        String filename2 = filename.replace('.', '_') + "-snapshot" + i + ".jpg";
+                        File dest = new File(storage, filename2);
                         if (!storage.exists() && !storage.mkdirs()) {
                             throw new Exception("Unable to access storage:" + storage.getPath());
                         }
