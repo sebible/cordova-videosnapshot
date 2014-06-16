@@ -51,7 +51,13 @@ limitations under the License.
 
     UIGraphicsBeginImageContextWithOptions(img.size, NO, 0.0f);
     [img drawAtPoint:CGPointMake(0.0f, 0.0f)];
-    [text drawAtPoint:CGPointMake(posX, posY) withAttributes:attrs];
+	if ([text respondsToSelector:@selector(drawAtPoint:withAttributes:)]) {
+    	[text drawAtPoint:CGPointMake(posX, posY) withAttributes:attrs];
+	} else {
+		CGContextRef context = UIGraphicsGetCurrentContext();
+		CGContextSetFillColorWithColor(context, color.CGColor);
+		[text drawAtPoint:CGPointMake(posX, posY) withFont:font];
+	}
     UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
 
