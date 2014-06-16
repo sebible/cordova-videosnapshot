@@ -38,7 +38,12 @@ limitations under the License.
 	UIFont* font = [UIFont fontWithName:fontName size:size];
 	UIColor* color = [UIColor whiteColor];
 	NSDictionary* attrs = [NSDictionary dictionaryWithObjectsAndKeys: font, NSFontAttributeName, color, NSForegroundColorAttributeName, nil];
-	CGSize sizeText = [text sizeWithAttributes:attrs];
+	CGSize sizeText = CGSizeMake(0.0f, 0.0f);
+	if ([text respondsToSelector:@selector(sizeWithAttributes)]) {
+		sizeText = [text sizeWithAttributes:attrs];
+	} else {
+		sizeText = [text sizeWithFont:font];
+	}
 
     CGFloat posX = w - margin - sizeText.width;
     CGFloat posY = h - margin - sizeText.height;
