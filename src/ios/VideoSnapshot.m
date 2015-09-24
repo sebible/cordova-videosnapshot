@@ -129,6 +129,7 @@ limitations under the License.
     NSString* tmppath = NSTemporaryDirectory();
     AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:url options:nil];
     AVAssetImageGenerator *generate = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+    generate.appliesPreferredTrackTransform = true;
     NSError *err = NULL;
 	NSMutableArray* paths = [[NSMutableArray alloc] init];
 	if (asset.duration.value == 0) {
